@@ -1,0 +1,421 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #090d16;
+  color: #f8fafc;
+  line-height: 1.4;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  background-image: url('bg.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+a {
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+  pointer-events: auto;
+  font-family: inherit;
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+#XRButtonWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 42%, rgba(15, 23, 42, 0.55), rgba(6, 9, 17, 0.9));
+}
+
+#XRButtonWrapper > * {
+  pointer-events: auto;
+}
+
+#XRButtonWrapper h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  margin: 0;
+  color: #f8fafc;
+  letter-spacing: -0.03em;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.XRButton {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  color: #060a14;
+  border: none;
+  cursor: pointer;
+  text-transform: none;
+  border-radius: 9999px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 36px;
+  min-width: 240px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
+}
+
+.XRButton::after {
+  content: '';
+  display: block;
+  width: 22px;
+  height: 22px;
+  background: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.9998 4.66699L12.3548 6.31199L18.8648 12.8337H4.6665V15.167H18.8648L12.3548 21.6887L13.9998 23.3337L23.3332 14.0003L13.9998 4.66699Z' fill='%23060a14'/%3E%3C/svg%3E")
+    no-repeat center center;
+  background-size: contain;
+}
+
+.XRButton:hover {
+  transform: scale(1.03);
+  box-shadow: 0 14px 36px rgba(56, 189, 248, 0.35);
+}
+
+/* Cross-Platform HUD (No backdrop-filter over WebGL, no pulsating dots) */
+#rf-hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 16px;
+  box-sizing: border-box;
+}
+
+#rf-hud.hidden {
+  display: none;
+}
+
+.rf-top-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rf-badge {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(11, 17, 30, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  padding: 8px 14px;
+  color: #f1f5f9;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.rf-brand {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  color: #38bdf8;
+}
+
+.rf-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(148, 163, 184, 0.25);
+}
+
+.rf-timer-val {
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fbbf24;
+  min-width: 72px;
+}
+
+.rf-stat-chip {
+  font-size: 12px;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.rf-btn {
+  pointer-events: auto;
+  background: rgba(30, 41, 59, 0.95);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 9px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.rf-btn:hover {
+  background: rgba(51, 65, 85, 0.98);
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+.rf-btn:active {
+  transform: scale(0.97);
+}
+
+.rf-btn.primary {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.rf-btn.primary:hover {
+  background: #0369a1;
+}
+
+.rf-btn.active {
+  background: #0f766e;
+  border-color: #2dd4bf;
+  color: #f0fdfa;
+}
+
+.rf-btn.warn {
+  background: #92400e;
+  border-color: #f59e0b;
+  color: #fef3c7;
+}
+
+.rf-voice-banner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(11, 17, 30, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 12px;
+  padding: 7px 12px;
+  font-size: 12px;
+  color: #e2e8f0;
+  max-width: min(460px, 90vw);
+}
+
+.rf-voice-transcript {
+  color: #7dd3fc;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+.rf-toast {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(11, 17, 30, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #f8fafc;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 40;
+  text-align: center;
+  max-width: min(520px, 90vw);
+}
+
+.rf-toast.show {
+  opacity: 1;
+}
+
+/* Bottom Dock */
+.rf-dock-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  pointer-events: none;
+}
+
+.rf-dock-toggle {
+  pointer-events: auto;
+  background: rgba(11, 17, 30, 0.94);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rf-dock {
+  pointer-events: auto;
+  width: min(940px, 96vw);
+  background: rgba(11, 17, 30, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.22s ease, opacity 0.2s ease;
+  max-height: 44vh;
+  overflow-y: auto;
+}
+
+.rf-dock.collapsed {
+  display: none;
+}
+
+.rf-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  padding-bottom: 8px;
+}
+
+.rf-tab-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rf-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rf-input {
+  pointer-events: auto;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  color: #f8fafc;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+}
+
+.rf-input:focus {
+  border-color: #38bdf8;
+}
+
+.rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.rf-table th,
+.rf-table td {
+  text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.rf-table th {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.rf-table tr.me {
+  background: rgba(56, 189, 248, 0.14);
+  color: #e0f2fe;
+}
+
+.rf-tutorial-strip {
+  pointer-events: auto;
+  background: rgba(14, 116, 144, 0.28);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: #ecfeff;
+}
+
+.rf-race-strip {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.rf-player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(30, 41, 59, 0.85);
+}
+
+.rf-hint-text {
+  font-size: 11px;
+  color: #94a3b8;
+}

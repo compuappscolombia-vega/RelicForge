@@ -1,0 +1,272 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidPlatform(p) {
+      return p in ['vr', 'desktop', 'mobile'];
+    }
+
+    function isValidPuzzleId(p) {
+      return p in ['chrono-cube', 'aether-clockwork', 'orbital-sanctum'];
+    }
+
+    function isValidDifficulty(d) {
+      return d in ['easy', 'normal', 'hard'];
+    }
+
+    function isValidVec3(arr) {
+      return arr is list && arr.size() == 3 && arr[0] is number && arr[1] is number && arr[2] is number;
+    }
+
+    function isValidQuat(arr) {
+      return arr is list && arr.size() == 4 && arr[0] is number && arr[1] is number && arr[2] is number && arr[3] is number;
+    }
+
+    function isRoomMember(roomId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/rooms/$(roomId)/players/$(request.auth.uid));
+    }
+
+    // --- Validation Blueprints ---
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+        'uid', 'displayName', 'platform', 'tutorialCompleted', 'totalSolved', 'bestScore', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'uid', 'displayName', 'platform', 'tutorialCompleted', 'totalSolved', 'bestScore', 'updatedAt'
+      ]) &&
+      isValidId(data.uid) &&
+      data.uid == request.auth.uid &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40 &&
+      isValidPlatform(data.platform) &&
+      data.tutorialCompleted is bool &&
+      data.totalSolved is int && data.totalSolved >= 0 && data.totalSolved <= 1000000 &&
+      data.bestScore is int && data.bestScore >= 0 && data.bestScore <= 100000 &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.keys().hasAll([
+        'uid', 'displayName', 'puzzleId', 'puzzleTitle', 'difficulty',
+        'bestTimeMs', 'accuracy', 'score', 'platform', 'mode', 'isPublic', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'uid', 'displayName', 'puzzleId', 'puzzleTitle', 'difficulty',
+        'bestTimeMs', 'accuracy', 'score', 'platform', 'mode', 'isPublic', 'updatedAt'
+      ]) &&
+      isValidId(data.uid) &&
+      data.uid == request.auth.uid &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40 &&
+      isValidPuzzleId(data.puzzleId) &&
+      data.puzzleTitle is string && data.puzzleTitle.size() >= 1 && data.puzzleTitle.size() <= 60 &&
+      isValidDifficulty(data.difficulty) &&
+      data.bestTimeMs is int && data.bestTimeMs >= 100 && data.bestTimeMs <= 3600000 &&
+      data.accuracy is int && data.accuracy >= 0 && data.accuracy <= 100 &&
+      data.score is int && data.score >= 0 && data.score <= 100000 &&
+      isValidPlatform(data.platform) &&
+      data.mode in ['solo', 'multiplayer'] &&
+      data.isPublic == true &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidRoom(data) {
+      return data.keys().hasAll([
+        'roomCode', 'hostUid', 'hostName', 'puzzleId', 'difficulty', 'mode',
+        'status', 'countdownStartMs', 'winnerUid', 'winnerName', 'playerCount', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'roomCode', 'hostUid', 'hostName', 'puzzleId', 'difficulty', 'mode',
+        'status', 'countdownStartMs', 'winnerUid', 'winnerName', 'playerCount', 'createdAt', 'updatedAt'
+      ]) &&
+      data.roomCode is string && data.roomCode.size() >= 4 && data.roomCode.size() <= 12 && data.roomCode.matches('^[A-Z0-9]+$') &&
+      isValidId(data.hostUid) &&
+      data.hostName is string && data.hostName.size() >= 1 && data.hostName.size() <= 40 &&
+      isValidPuzzleId(data.puzzleId) &&
+      isValidDifficulty(data.difficulty) &&
+      data.mode in ['race', 'coop'] &&
+      data.status in ['waiting', 'countdown', 'playing', 'finished'] &&
+      data.countdownStartMs is int && data.countdownStartMs >= 0 &&
+      data.winnerUid is string && data.winnerUid.size() <= 128 &&
+      data.winnerName is string && data.winnerName.size() <= 40 &&
+      data.playerCount is int && data.playerCount >= 1 && data.playerCount <= 8 &&
+      data.createdAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidRoomPlayer(data, roomId) {
+      return data.keys().hasAll([
+        'roomId', 'uid', 'displayName', 'platform', 'ready', 'placedCount',
+        'totalPieces', 'accuracy', 'score', 'finished', 'finishTimeMs', 'handPos', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'roomId', 'uid', 'displayName', 'platform', 'ready', 'placedCount',
+        'totalPieces', 'accuracy', 'score', 'finished', 'finishTimeMs', 'handPos', 'updatedAt'
+      ]) &&
+      isValidId(data.roomId) && data.roomId == roomId &&
+      isValidId(data.uid) && data.uid == request.auth.uid &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 40 &&
+      isValidPlatform(data.platform) &&
+      data.ready is bool &&
+      data.placedCount is int && data.placedCount >= 0 && data.placedCount <= 20 &&
+      data.totalPieces is int && data.totalPieces >= 1 && data.totalPieces <= 20 &&
+      data.accuracy is int && data.accuracy >= 0 && data.accuracy <= 100 &&
+      data.score is int && data.score >= 0 && data.score <= 100000 &&
+      data.finished is bool &&
+      data.finishTimeMs is int && data.finishTimeMs >= 0 && data.finishTimeMs <= 3600000 &&
+      isValidVec3(data.handPos) &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidRoomPiece(data, roomId, pieceId) {
+      return data.keys().hasAll([
+        'roomId', 'pieceId', 'pos', 'quat', 'locked', 'heldByUid', 'heldByName', 'placedByUid', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'roomId', 'pieceId', 'pos', 'quat', 'locked', 'heldByUid', 'heldByName', 'placedByUid', 'updatedAt'
+      ]) &&
+      isValidId(data.roomId) && data.roomId == roomId &&
+      isValidId(data.pieceId) && data.pieceId == pieceId && data.pieceId.size() <= 64 &&
+      isValidVec3(data.pos) &&
+      isValidQuat(data.quat) &&
+      data.locked is bool &&
+      data.heldByUid is string && data.heldByUid.size() <= 128 &&
+      data.heldByName is string && data.heldByName.size() <= 40 &&
+      data.placedByUid is string && data.placedByUid.size() <= 128 &&
+      data.updatedAt == request.time;
+    }
+
+    // --- Collection Rules ---
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isSignedIn();
+      allow list: if false;
+      allow create: if isValidId(userId) && isOwner(userId) && isVerifiedUser() && isValidUserProfile(incoming());
+      allow update: if isValidId(userId) && isOwner(userId) && isVerifiedUser() && isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'platform', 'tutorialCompleted', 'totalSolved', 'bestScore', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /leaderboards/{entryId} {
+      allow get: if isValidId(entryId) && existing().isPublic == true;
+      allow list: if existing().isPublic == true;
+      allow create: if isValidId(entryId) && isVerifiedUser() && isValidLeaderboardEntry(incoming()) &&
+        entryId == request.auth.uid + '_' + incoming().puzzleId;
+      allow update: if isValidId(entryId) && isVerifiedUser() && isValidLeaderboardEntry(incoming()) &&
+        existing().uid == request.auth.uid &&
+        incoming().uid == existing().uid &&
+        incoming().puzzleId == existing().puzzleId &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'puzzleTitle', 'difficulty', 'bestTimeMs', 'accuracy', 'score', 'platform', 'mode', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /rooms/{roomId} {
+      allow get: if isValidId(roomId) && isSignedIn();
+      allow list: if isSignedIn() && existing().status == 'waiting';
+      allow create: if isValidId(roomId) && isVerifiedUser() && isValidRoom(incoming()) &&
+        incoming().roomCode == roomId &&
+        incoming().hostUid == request.auth.uid &&
+        incoming().status == 'waiting' &&
+        incoming().winnerUid == '' &&
+        incoming().playerCount == 1 &&
+        incoming().createdAt == request.time;
+      allow update: if isValidId(roomId) && isVerifiedUser() && isValidRoom(incoming()) &&
+        incoming().roomCode == existing().roomCode &&
+        incoming().hostUid == existing().hostUid &&
+        incoming().createdAt == existing().createdAt && (
+          // Action 1: Host configures puzzle/mode/status or resets for rematch
+          (existing().hostUid == request.auth.uid &&
+            (existing().status != 'finished' || incoming().status == 'waiting') &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'puzzleId', 'difficulty', 'mode', 'status', 'countdownStartMs', 'winnerUid', 'winnerName', 'updatedAt'
+            ])) ||
+          // Action 2: Player joins or leaves waiting lobby
+          (existing().status == 'waiting' &&
+            (incoming().playerCount == existing().playerCount + 1 || incoming().playerCount == existing().playerCount - 1) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['playerCount', 'updatedAt'])) ||
+          // Action 3: Active room member claims completion win while playing
+          (isRoomMember(roomId) &&
+            existing().status == 'playing' &&
+            existing().winnerUid == '' &&
+            incoming().status == 'finished' &&
+            incoming().winnerUid == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'winnerUid', 'winnerName', 'updatedAt']))
+        );
+      allow delete: if isValidId(roomId) && isVerifiedUser() && existing().hostUid == request.auth.uid && existing().status == 'waiting';
+
+      match /players/{playerId} {
+        allow get: if isValidId(roomId) && isValidId(playerId) && isSignedIn() &&
+          exists(/databases/$(database)/documents/rooms/$(roomId));
+        allow list: if isSignedIn() && existing().roomId == roomId;
+        allow create: if isValidId(roomId) && isValidId(playerId) && isOwner(playerId) && isVerifiedUser() &&
+          isValidRoomPlayer(incoming(), roomId) &&
+          exists(/databases/$(database)/documents/rooms/$(roomId));
+        allow update: if isValidId(roomId) && isValidId(playerId) && isOwner(playerId) && isVerifiedUser() &&
+          isValidRoomPlayer(incoming(), roomId) &&
+          exists(/databases/$(database)/documents/rooms/$(roomId)) &&
+          incoming().roomId == existing().roomId &&
+          incoming().uid == existing().uid &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'platform', 'ready', 'placedCount', 'totalPieces',
+            'accuracy', 'score', 'finished', 'finishTimeMs', 'handPos', 'updatedAt'
+          ]);
+        allow delete: if isValidId(roomId) && isValidId(playerId) && isOwner(playerId) && isVerifiedUser();
+      }
+
+      match /pieces/{pieceId} {
+        allow get: if isValidId(roomId) && isValidId(pieceId) && isRoomMember(roomId);
+        allow list: if isSignedIn() && existing().roomId == roomId;
+        allow create: if isValidId(roomId) && isValidId(pieceId) && isVerifiedUser() &&
+          isValidRoomPiece(incoming(), roomId, pieceId) &&
+          exists(/databases/$(database)/documents/rooms/$(roomId)) &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.hostUid == request.auth.uid;
+        allow update: if isValidId(roomId) && isValidId(pieceId) && isVerifiedUser() &&
+          isValidRoomPiece(incoming(), roomId, pieceId) &&
+          isRoomMember(roomId) &&
+          incoming().roomId == existing().roomId &&
+          incoming().pieceId == existing().pieceId && (
+            // Action 1: Normal grab/move/snap while not locked
+            (!existing().locked &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'pos', 'quat', 'locked', 'heldByUid', 'heldByName', 'placedByUid', 'updatedAt'
+              ])) ||
+            // Action 2: Host resets board when room returns to waiting
+            (get(/databases/$(database)/documents/rooms/$(roomId)).data.hostUid == request.auth.uid &&
+              get(/databases/$(database)/documents/rooms/$(roomId)).data.status == 'waiting' &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'pos', 'quat', 'locked', 'heldByUid', 'heldByName', 'placedByUid', 'updatedAt'
+              ]))
+          );
+        allow delete: if isValidId(roomId) && isValidId(pieceId) && isVerifiedUser() &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.hostUid == request.auth.uid;
+      }
+    }
+  }
+}

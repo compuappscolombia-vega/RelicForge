@@ -1,0 +1,171 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public player profile without PII for cross-platform puzzle tracking.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "platform": { "type": "string", "enum": ["vr", "desktop", "mobile"] },
+        "tutorialCompleted": { "type": "boolean" },
+        "totalSolved": { "type": "integer" },
+        "bestScore": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "platform", "tutorialCompleted", "totalSolved", "bestScore", "updatedAt"]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Global leaderboard record tracking completion time, accuracy, and score per puzzle.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "puzzleId": { "type": "string", "enum": ["chrono-cube", "aether-clockwork", "orbital-sanctum"] },
+        "puzzleTitle": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "difficulty": { "type": "string", "enum": ["easy", "normal", "hard"] },
+        "bestTimeMs": { "type": "integer" },
+        "accuracy": { "type": "integer" },
+        "score": { "type": "integer" },
+        "platform": { "type": "string", "enum": ["vr", "desktop", "mobile"] },
+        "mode": { "type": "string", "enum": ["solo", "multiplayer"] },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "puzzleId",
+        "puzzleTitle",
+        "difficulty",
+        "bestTimeMs",
+        "accuracy",
+        "score",
+        "platform",
+        "mode",
+        "isPublic",
+        "updatedAt"
+      ]
+    },
+    "MultiplayerRoom": {
+      "title": "MultiplayerRoom",
+      "description": "Real-time cross-platform multiplayer puzzle session room.",
+      "type": "object",
+      "properties": {
+        "roomCode": { "type": "string", "minLength": 4, "maxLength": 12, "pattern": "^[A-Z0-9]+$" },
+        "hostUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "hostName": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "puzzleId": { "type": "string", "enum": ["chrono-cube", "aether-clockwork", "orbital-sanctum"] },
+        "difficulty": { "type": "string", "enum": ["easy", "normal", "hard"] },
+        "mode": { "type": "string", "enum": ["race", "coop"] },
+        "status": { "type": "string", "enum": ["waiting", "countdown", "playing", "finished"] },
+        "countdownStartMs": { "type": "integer" },
+        "winnerUid": { "type": "string", "maxLength": 128 },
+        "winnerName": { "type": "string", "maxLength": 40 },
+        "playerCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "roomCode",
+        "hostUid",
+        "hostName",
+        "puzzleId",
+        "difficulty",
+        "mode",
+        "status",
+        "countdownStartMs",
+        "winnerUid",
+        "winnerName",
+        "playerCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RoomPlayer": {
+      "title": "RoomPlayer",
+      "description": "Participant state and live progress inside a multiplayer room.",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string", "minLength": 4, "maxLength": 12, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "platform": { "type": "string", "enum": ["vr", "desktop", "mobile"] },
+        "ready": { "type": "boolean" },
+        "placedCount": { "type": "integer" },
+        "totalPieces": { "type": "integer" },
+        "accuracy": { "type": "integer" },
+        "score": { "type": "integer" },
+        "finished": { "type": "boolean" },
+        "finishTimeMs": { "type": "integer" },
+        "handPos": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "roomId",
+        "uid",
+        "displayName",
+        "platform",
+        "ready",
+        "placedCount",
+        "totalPieces",
+        "accuracy",
+        "score",
+        "finished",
+        "finishTimeMs",
+        "handPos",
+        "updatedAt"
+      ]
+    },
+    "RoomPieceState": {
+      "title": "RoomPieceState",
+      "description": "Synchronized 3D puzzle component transform and lock state in co-op rooms.",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string", "minLength": 4, "maxLength": 12, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "pieceId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "pos": { "type": "array" },
+        "quat": { "type": "array" },
+        "locked": { "type": "boolean" },
+        "heldByUid": { "type": "string", "maxLength": 128 },
+        "heldByName": { "type": "string", "maxLength": 40 },
+        "placedByUid": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "roomId",
+        "pieceId",
+        "pos",
+        "quat",
+        "locked",
+        "heldByUid",
+        "heldByName",
+        "placedByUid",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public player profile and lifetime solve stats."
+    },
+    "/leaderboards/{entryId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Global leaderboard scores sorted by score, bestTimeMs, or accuracy."
+    },
+    "/rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/MultiplayerRoom" },
+      "description": "Cross-platform multiplayer rooms for competitive race and shared co-op."
+    },
+    "/rooms/{roomId}/players/{playerId}": {
+      "schema": { "$ref": "#/entities/RoomPlayer" },
+      "description": "Live player status, readiness, and score progress inside a room."
+    },
+    "/rooms/{roomId}/pieces/{pieceId}": {
+      "schema": { "$ref": "#/entities/RoomPieceState" },
+      "description": "Synchronized 3D piece positions, orientations, and snap locks for shared rooms."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "RelicForge XR",
+  "description": "Interactive 3D spatial puzzles in your living room with hand-tracking assembly, voice navigation, guided onboarding tutorial, global leaderboards, and real-time cross-platform multiplayer.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}
